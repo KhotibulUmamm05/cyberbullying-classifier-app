@@ -13,13 +13,19 @@ from scipy.sparse import hstack
 
 st.set_page_config(
     page_title="Cyberbullying Tweet Classifier",
-    page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 CUSTOM_CSS = """
 <style>
+[data-testid="stSidebar"] .stButton > button {
+    border-radius: 999px;
+    width: 100%;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
 .hero {
     background: linear-gradient(135deg, #5B5FEF 0%, #4347C4 100%);
     padding: 2.2rem 2rem;
@@ -76,6 +82,16 @@ CUSTOM_CSS = """
     padding: 0.8rem 1rem;
     margin-bottom: 0.6rem;
 }
+
+.note-box {
+    background: #FEF9C3;
+    border-left: 6px solid #CA8A04;
+    border-radius: 10px;
+    padding: 0.9rem 1.2rem;
+    margin-top: 0.8rem;
+    margin-bottom: 0.8rem;
+}
+.note-box p { color: #713F12; margin: 0; }
 </style>
 """
 
@@ -141,16 +157,28 @@ def extract_numerical_features(raw_text, clean):
     return np.array([[values[col] for col in numerical_features]])
 
 
-# ---------- Sidebar Navigation ----------
+# ---------- Sidebar Navigation (pill-style buttons) ----------
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
+
+NAV_PAGES = ["Home", "Analisis Dataset", "Prediction"]
+
 with st.sidebar:
-    st.markdown("## 🛡️ Cyberbullying Classifier")
-    page = st.radio(
-        "Navigasi",
-        ["🏠 Home", "📊 Analisis Dataset", "🔍 Prediction"],
-        label_visibility="collapsed",
-    )
+    st.markdown("## Cyberbullying Classifier")
+    current_page = st.session_state.page
+    for nav_page in NAV_PAGES:
+        if st.button(
+            nav_page,
+            key=f"nav_{nav_page}",
+            type="primary" if current_page == nav_page else "secondary",
+            use_container_width=True,
+        ):
+            st.session_state.page = nav_page
+            st.rerun()
     st.markdown("---")
     st.caption("Final Project — Klasifikasi Cyberbullying pada Tweet\n\nModel: Random Forest")
+
+page = st.session_state.page
 
 
 # ---------- Home Page ----------
@@ -158,7 +186,7 @@ def render_home():
     st.markdown(
         """
         <div class="hero">
-            <h1>🛡️ Cyberbullying Tweet Classifier</h1>
+            <h1>Cyberbullying Tweet Classifier</h1>
             <p>Aplikasi klasifikasi teks tweet untuk mendeteksi kategori cyberbullying menggunakan Machine Learning.</p>
         </div>
         """,
@@ -168,7 +196,7 @@ def render_home():
     st.markdown(
         """
         <div class="section-card">
-            <h4>📌 Tentang Proyek</h4>
+            <h4>Tentang Proyek</h4>
             <p>Proyek ini membangun model klasifikasi teks untuk mengidentifikasi apakah sebuah tweet mengandung
             unsur <b>cyberbullying</b> beserta kategorinya (age, ethnicity, gender, religion, other_cyberbullying)
             atau termasuk <b>not_cyberbullying</b>. Model dilatih menggunakan dataset publik
@@ -177,7 +205,7 @@ def render_home():
             algoritma Machine Learning.</p>
         </div>
         <div class="section-card">
-            <h4>🎯 Tujuan Aplikasi</h4>
+            <h4>Tujuan Aplikasi</h4>
             <p>Aplikasi ini dibuat untuk membantu <b>mendeteksi dan mengklasifikasikan konten cyberbullying secara
             otomatis</b> pada teks tweet, sehingga dapat digunakan sebagai alat bantu moderasi konten, penelitian,
             maupun edukasi mengenai penyebaran ujaran kebencian di media sosial.</p>
@@ -186,7 +214,7 @@ def render_home():
         unsafe_allow_html=True,
     )
 
-    st.markdown("#### 📈 Ringkasan Model & Data")
+    st.markdown("#### Ringkasan Model & Data")
     if DASHBOARD_AVAILABLE:
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -210,19 +238,30 @@ def render_home():
     else:
         st.warning("Data ringkasan belum tersedia. Jalankan cell ekspor dashboard di notebook terlebih dahulu.")
 
-    st.markdown("#### 🧭 Cara Menggunakan Aplikasi")
+    st.markdown("#### Cara Menggunakan Aplikasi")
     steps = [
-        "Buka halaman <b>📊 Analisis Dataset</b> untuk memahami karakteristik data yang digunakan melatih model.",
-        "Buka halaman <b>🔍 Prediction</b>, lalu masukkan teks tweet yang ingin diperiksa.",
+        "Buka halaman <b>Analisis Dataset</b> untuk memahami karakteristik data yang digunakan melatih model.",
+        "Buka halaman <b>Prediction</b>, lalu masukkan teks tweet yang ingin diperiksa.",
         "Klik tombol <b>Prediksi</b> untuk melihat kategori cyberbullying beserta probabilitasnya.",
     ]
     for i, step in enumerate(steps, start=1):
         st.markdown(f'<div class="step-item"><b>{i}.</b> {step}</div>', unsafe_allow_html=True)
 
+    st.markdown(
+        """
+        <div class="note-box">
+            <p><b>Catatan:</b> Gunakan teks berbahasa Inggris saat mencoba fitur prediksi, karena model
+            dilatih menggunakan data tweet berbahasa Inggris sehingga hasil prediksi untuk teks berbahasa
+            lain kemungkinan besar tidak akurat.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 # ---------- Analisis Dataset Page ----------
 def render_dataset_analysis():
-    st.markdown("## 📊 Analisis Dataset")
+    st.markdown("## Analisis Dataset")
     st.write(
         "Bagian ini menjelaskan pemahaman terhadap dataset **Cyberbullying Tweets** yang digunakan untuk "
         "melatih model, setelah melalui proses pembersihan (penghapusan duplikat & data kosong)."
@@ -235,7 +274,7 @@ def render_dataset_analysis():
         )
         return
 
-    st.markdown("### 🔎 Data Understanding")
+    st.markdown("### Data Understanding")
     c1, c2, c3 = st.columns(3)
     c1.metric("Total Data", f"{summary_stats['total_data']:,}")
     c2.metric("Jumlah Kategori", summary_stats["jumlah_kategori"])
@@ -257,11 +296,11 @@ def render_dataset_analysis():
     )
     st.dataframe(length_stats, width="stretch", hide_index=True)
 
-    st.markdown("### 📊 Distribusi Label")
+    st.markdown("### Distribusi Label")
     st.dataframe(label_counts.rename("Jumlah").to_frame(), width="stretch")
     st.bar_chart(label_counts)
 
-    st.markdown("### 📏 Distribusi Panjang Tweet")
+    st.markdown("### Distribusi Panjang Tweet")
     bins = pd.cut(
         tweet_lengths[tweet_lengths <= 300],
         bins=range(0, 320, 20),
@@ -277,22 +316,31 @@ def render_dataset_analysis():
         f"tweet terpendek: {summary_stats['tweet_terpendek']} karakter."
     )
 
-    st.markdown("### ☁️ Word Cloud")
+    st.markdown("### Word Cloud")
     if os.path.exists("dashboard_data/wordcloud.png"):
         st.image("dashboard_data/wordcloud.png", width="stretch")
 
 
 # ---------- Prediction Page ----------
 def render_prediction():
-    st.markdown("## 🔍 Prediction")
+    st.markdown("## Prediction")
     st.write(
         "Masukkan teks tweet untuk memprediksi apakah teks tersebut termasuk kategori cyberbullying "
         "(age, ethnicity, gender, religion, other_cyberbullying) atau not_cyberbullying."
     )
+    st.markdown(
+        """
+        <div class="note-box">
+            <p><b>Catatan:</b> Gunakan teks berbahasa Inggris, karena model dilatih menggunakan data tweet
+            berbahasa Inggris sehingga hasil prediksi untuk teks berbahasa lain kemungkinan besar tidak akurat.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    user_input = st.text_area("Teks Tweet", height=140, placeholder="Tulis atau tempel teks tweet di sini...")
+    user_input = st.text_area("Teks Tweet", height=140, placeholder="Write or paste tweet text in English here...")
 
-    if not st.button("🔍 Prediksi", type="primary"):
+    if not st.button("Prediksi", type="primary"):
         return
 
     if not user_input.strip():
@@ -359,9 +407,9 @@ def render_prediction():
 
 
 # ---------- Router ----------
-if page == "🏠 Home":
+if page == "Home":
     render_home()
-elif page == "📊 Analisis Dataset":
+elif page == "Analisis Dataset":
     render_dataset_analysis()
 else:
     render_prediction()
